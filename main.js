@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { runForAddressOpenFiber } = require('./src/openfiber-coverage');
+const { runForAddressFiberCop } = require('./src/fibercop-coverage');
 
 function loadConfig() {
   const configPath = path.join(__dirname, 'addresses.csv');
@@ -52,6 +53,8 @@ async function main() {
   for (const addr of addresses) {
     // eslint-disable-next-line no-await-in-loop
     await runForAddressOpenFiber(addr);
+    // eslint-disable-next-line no-await-in-loop
+    await runForAddressFiberCop(addr);
   }
 }
 
