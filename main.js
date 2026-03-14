@@ -47,14 +47,96 @@ function loadConfig() {
   return addresses;
 }
 
+function createOutputStream() {
+  const outputDir = path.join(__dirname, 'output');
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const fileName = [
+    now.getFullYear(),
+    pad(now.getMonth() + 1),
+    pad(now.getDate()),
+    '-',
+    pad(now.getHours()),
+    pad(now.getMinutes()),
+    pad(now.getSeconds()),
+  ].join('');
+
+  const filePath = path.join(outputDir, `results-${fileName}.csv`);
+
+  // header
+  fs.writeFileSync(
+    filePath,
+    'city,street,houseNumber,provider,result,timestamp\n',
+    'utf8',
+  );
+
+  return filePath;
+}
+
+function appendResultRow(filePath, {
+  provider,
+  city,
+  street,
+  houseNumber,
+  result,
+}) {
+  const now = new Date().toISOString();
+  const line = `"${city}","${street}","${houseNumber}","${provider}","${result}","${now}"\n`;
+  fs.appendFileSync(filePath, line, 'utf8');
+}
+
+function logToConsole({ provider, city, street, houseNumber, result }) {
+  const prefix = `${city}, ${street} ${houseNumber}:`;
+  let label;
+
+  switch (result) {
+    case 'covered':
+      label = '✅ COVERED';
+      break;
+    case 'not_covered':
+      label = '❌ NOT COVERED';
+      break;
+    default:
+      label = '☠️ UNKNOWN';
+      break;
+  }
+
+  // eslint-disable-next-line no-console
+  console.log(`${prefix} ${label} by ${provider}`);
+}
+
 async function main() {
   const addresses = loadConfig();
+  const outputFilePath = createOutputStream();
 
   for (const addr of addresses) {
     // eslint-disable-next-line no-await-in-loop
-    await runForAddressOpenFiber(addr);
+    const ofResult = await runForAddressOpenFiber(addr);
+    const ofRecord = {
+      provider: 'OpenFiber',
+      city: addr.city,
+      street: addr.street,
+      houseNumber: addr.houseNumber,
+      result: ofResult,
+    };
+    logToConsole(ofRecord);
+    appendResultRow(outputFilePath, ofRecord);
+
     // eslint-disable-next-line no-await-in-loop
-    await runForAddressFiberCop(addr);
+    const fcResult = await runForAddressFiberCop(addr);
+    const fcRecord = {
+      provider: 'FiberCop',
+      city: addr.city,
+      street: addr.street,
+      houseNumber: addr.houseNumber,
+      result: fcResult,
+    };
+    logToConsole(fcRecord);
+    appendResultRow(outputFilePath, fcRecord);
   }
 }
 

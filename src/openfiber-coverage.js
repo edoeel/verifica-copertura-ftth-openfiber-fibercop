@@ -46,7 +46,7 @@ async function runForAddressOpenFiber({ city, street, houseNumber }) {
 
   await page.click('#checkCoverageSubmitButton');
 
-  let result = null;
+  let result = 'unknown';
 
   try {
     const resultHandle = await page.waitForFunction(() => {
@@ -63,25 +63,14 @@ async function runForAddressOpenFiber({ city, street, houseNumber }) {
       return null;
     }, { timeout: 60_000 });
 
-    result = await resultHandle.jsonValue();
+    const value = await resultHandle.jsonValue();
+    if (value === 'covered' || value === 'not_covered') {
+      result = value;
+    }
   } catch {}
-
-  const prefix = `${city}, ${street} ${houseNumber}: `;
-
-  switch (result) {
-    case 'covered':
-      console.log(`${prefix}✅ COPERTO da OpenFiber`);
-      break;
-    case 'not_covered':
-      console.log(`${prefix}❌ NON COPERTO da OpenFiber`);
-      break;
-    default:
-      console.log(`${prefix}☠️ NON DETERMINATO da OpenFiber`);
-      break;
-  }
-
   await browser.close();
+
+  return result;
 }
 
 module.exports = { runForAddressOpenFiber };
-

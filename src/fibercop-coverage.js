@@ -11,7 +11,7 @@ async function typeSlow(page, selector, text, baseDelayMs = 100, jitterMs = 100)
 }
 
 async function runForAddressFiberCop({ city, street, houseNumber }) {
-  const browser = await chromium.launch({ headless: false });
+  const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
   await page.goto(PAGE_URL, { waitUntil: 'networkidle' });
@@ -41,7 +41,7 @@ async function runForAddressFiberCop({ city, street, houseNumber }) {
   await page.waitForTimeout(2000);
   await page.click('.address-button');
 
-  let result = null;
+  let result = 'unknown';
 
   try {
     const resultHandle = await page.waitForFunction(() => {
@@ -66,27 +66,14 @@ async function runForAddressFiberCop({ city, street, houseNumber }) {
       return null;
     }, { timeout: 60_000 });
 
-    result = await resultHandle.jsonValue();
-  } catch {
-    // ignore, will be treated as non-determined
-  }
-
-  const prefix = `${city}, ${street} ${houseNumber}: `;
-
-  switch (result) {
-    case 'covered':
-      console.log(`${prefix}✅ COPERTO da FiberCop`);
-      break;
-    case 'not_covered':
-      console.log(`${prefix}❌ NON COPERTO da FiberCop`);
-      break;
-    default:
-      console.log(`${prefix}☠️ NON DETERMINATO da FiberCop`);
-      break;
-  }
-
+    const value = await resultHandle.jsonValue();
+    if (value === 'covered' || value === 'not_covered') {
+      result = value;
+    }
+  } catch {}
   await browser.close();
+
+  return result;
 }
 
 module.exports = { runForAddressFiberCop };
-
