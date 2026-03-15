@@ -1,4 +1,5 @@
 const { chromium } = require('@playwright/test');
+const fs = require('fs');
 
 const PAGE_URL = 'https://copertura.fibercop.com/';
 
@@ -12,7 +13,11 @@ async function typeSlow(page, selector, text, baseDelayMs = 100, jitterMs = 100)
 
 async function runForAddressFiberCop({ city, street, houseNumber }) {
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    viewport: { width: 1280, height: 720 }
+  });
+  const page = await context.newPage();
 
   await page.goto(PAGE_URL, { waitUntil: 'networkidle' });
 
@@ -22,11 +27,17 @@ async function runForAddressFiberCop({ city, street, houseNumber }) {
   await page.waitForTimeout(4000);
 
   // Select the correct suggestion from `ul.suggestions-list`
-  const suggestions = page.locator('ul.suggestions-list li');
-  const count = await suggestions.count();
+  try {
+    await page.waitForSelector('ul.suggestions-list li', { state: 'attached', timeout: 5000 });
+  } catch (e) {
+    await browser.close();
+    return 'not_exist';
+  }
 
-  for (let i = 0; i < count; i += 1) {
-    const item = suggestions.nth(i);
+  const suggestions = await page.$$('ul.suggestions-list li');
+  let selected = false;
+
+  for (const item of suggestions) {
     const text = (await item.innerText()).trim();
 
     if (
@@ -34,8 +45,14 @@ async function runForAddressFiberCop({ city, street, houseNumber }) {
       || text.toLowerCase().startsWith(fullAddress.toLowerCase())
     ) {
       await item.click();
+      selected = true;
       break;
     }
+  }
+
+  if (!selected) {
+    await browser.close();
+    return 'not_exist';
   }
 
   await page.waitForTimeout(2000);

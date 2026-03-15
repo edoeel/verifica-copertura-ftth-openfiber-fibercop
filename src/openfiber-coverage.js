@@ -1,4 +1,5 @@
 const { chromium } = require('@playwright/test');
+const fs = require('fs');
 
 const PAGE_URL = 'https://openfiber.it/verifica-copertura/';
 
@@ -12,7 +13,11 @@ async function typeSlow(page, selector, text, baseDelayMs = 100, jitterMs = 100)
 
 async function runForAddressOpenFiber({ city, street, houseNumber }) {
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    viewport: { width: 1280, height: 720 }
+  });
+  const page = await context.newPage();
 
   await page.goto(PAGE_URL, { waitUntil: 'networkidle' });
 
@@ -30,17 +35,32 @@ async function runForAddressOpenFiber({ city, street, houseNumber }) {
   await page.waitForTimeout(2000);
 
   await typeSlow(page, '#city-coverage', city);
-  await page.waitForTimeout(2000);
+  try {
+    await page.waitForSelector('ul#ui-id-1 li', { state: 'attached', timeout: 5000 });
+  } catch (e) {
+    await browser.close();
+    return 'not_exist';
+  }
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
 
   await typeSlow(page, '#street-coverage', street);
-  await page.waitForTimeout(2000);
+  try {
+    await page.waitForSelector('ul#ui-id-2 li', { state: 'attached', timeout: 5000 });
+  } catch (e) {
+    await browser.close();
+    return 'not_exist';
+  }
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
 
   await typeSlow(page, '#house-number-coverage', houseNumber);
-  await page.waitForTimeout(2000);
+  try {
+    await page.waitForSelector('ul#ui-id-3 li', { state: 'attached', timeout: 5000 });
+  } catch (e) {
+    await browser.close();
+    return 'not_exist';
+  }
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
 

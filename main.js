@@ -100,6 +100,9 @@ function logToConsole({ provider, city, street, houseNumber, result }) {
     case 'not_covered':
       label = '❌ NOT COVERED';
       break;
+    case 'not_exist':
+      label = '❓ NOT EXIST';
+      break;
     default:
       label = '☠️ UNKNOWN';
       break;
