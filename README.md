@@ -64,5 +64,4 @@ The results file includes:
 - **Address details**: City, street, and house number.
 - **Provider**: Either OpenFiber or FiberCop.
 - **Result**: `covered`, `not_covered`, `not_exist` (if the address wasn't found), or `unknown`.
-- **Timestamp**: The exact time the check was performed.
 

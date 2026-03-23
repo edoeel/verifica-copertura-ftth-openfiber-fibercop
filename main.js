@@ -70,7 +70,7 @@ function createOutputStream() {
   // header
   fs.writeFileSync(
     filePath,
-    'city,street,houseNumber,provider,result,timestamp\n',
+    'city,street,houseNumber,provider,result\n',
     'utf8',
   );
 
@@ -84,8 +84,7 @@ function appendResultRow(filePath, {
   houseNumber,
   result,
 }) {
-  const now = new Date().toISOString();
-  const line = `"${city}","${street}","${houseNumber}","${provider}","${result}","${now}"\n`;
+  const line = `"${city}","${street}","${houseNumber}","${provider}","${result}"\n`;
   fs.appendFileSync(filePath, line, 'utf8');
 }
 
